@@ -1,0 +1,22 @@
+body {
+    margin: 0px;
+    overflow: hidden;
+}
+
+#canvas {
+    position: absolute;
+    z-index: 2;
+}
+
+#menu {
+    z-index: 3;
+}
+
+#settings {
+    position: absolute;
+    z-index: 4;
+}
+
+td:last-child {
+    width: 32px;
+}

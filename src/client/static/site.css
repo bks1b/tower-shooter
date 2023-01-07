@@ -1,0 +1,55 @@
+h1, h2, h3, h4, h5, h6 {
+    margin: 0px;
+    font-weight: 400;
+}
+
+ul {
+    margin: 0px;
+}
+
+.mainButtons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: row;
+    margin-top: 8px;
+    gap: 8px;
+}
+
+.play {
+    font-size: 25px;
+}
+
+.link {
+    cursor: pointer;
+}
+
+.home {
+    color: #aaaaaa;
+}
+
+.heroes {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.heroes > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
