@@ -18,7 +18,7 @@ const dash = {
 export default <Hero[]>[
     {
         color: '#00aa20',
-        health: 120,
+        health: 130,
         role: 'attack',
         weapon: {
             type: 'hitscan',
@@ -33,13 +33,13 @@ export default <Hero[]>[
     },
     {
         color: '#fc7f03',
-        health: 100,
+        health: 110,
         role: 'defend',
         flyingVelocity: 5,
         weapon: {
             type: 'projectile',
-            velocity: 150,
-            radius: 0.8,
+            velocity: 120,
+            radius: 0.5,
             damage: 20,
             rof: 550,
             gravity: false,
@@ -48,13 +48,13 @@ export default <Hero[]>[
     },
     {
         color: '#64b9de',
-        health: 150,
+        health: 160,
         role: 'attack',
         weapon: {
             type: 'projectile',
             velocity: 180,
-            radius: 1,
-            damage: 25,
+            radius: 0.8,
+            damage: 20,
             rof: 500,
             gravity: true,
             knockback: true,
@@ -129,7 +129,7 @@ export default <Hero[]>[
     },
     {
         color: '#966432',
-        health: 130,
+        health: 140,
         role: 'attack',
         weapon: {
             type: 'hitscan',
@@ -140,14 +140,14 @@ export default <Hero[]>[
     },
     {
         color: '#eb3636',
-        health: 160,
+        health: 170,
         role: 'defend',
         weapon: {
             type: 'projectile',
             velocity: 300,
             radius: 0.3,
             damage: 40,
-            rof: 1000,
+            rof: 900,
             gravity: true,
         },
         ability: dash,
