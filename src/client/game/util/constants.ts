@@ -94,5 +94,5 @@ export const TEAMMATE_HEALTH_HEIGHT = 10;
 
 export const SKY_COLOR = '#64beff';
 
-export const BOT_SHOOTING_CONST = 3;
+export const BOT_SHOOTING_CONST = 3.5;
 export const BOT_POSITION_TRESHOLD = 1;
