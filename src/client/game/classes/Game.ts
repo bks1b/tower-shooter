@@ -1,6 +1,6 @@
 import { Vec3, World } from 'cannon-es';
-import { Euler, PerspectiveCamera, PointLight, Scene, Vector2, Vector3, WebGLRenderer } from 'three';
-import { ABILITY_COLOR, ABILITY_FONT, ABILITY_SIZE, CONTROLLED_HEALTH_HEIGHT, CONTROLLED_HEALTH_WIDTH, CONTROLLED_RADIUS, CROSSHAIR_COLOR, CROSSHAIR_INNER_RADIUS, CROSSHAIR_LINE_WIDTH, CROSSHAIR_OUTER_RADIUS, ENEMY_HEALTH, FONT, GAME_LENGTH, GAP, GRAVITY, HEALTH_FONT, HITMARKER_DURATION, HITMARKER_INNER_RADIUS, HITMARKER_OUTER_RADIUS, KILLS_FONT, KILL_ARROW_LINE_WIDTH, KILL_ARROW_WIDTH, KILL_DURATION, KILL_RADIUS, OWN_HEALTH, REMAINING_ABILITY_COLOR, REASPAWN_FONT, RESPAWN_TIME, SKY_COLOR, TEAMMATE_FONT, TEAMMATE_HEALTH_HEIGHT, TEAMMATE_RADIUS, TEXT_COLOR, TIME_FONT, TIME_STEP, CROSSHAIR_KILL_COLOR, CROSSHAIR_KILL_DURATION, HITMARKER_COLOR, HITMARKER_LINE_WIDTH } from '../util/constants';
+import { Euler, Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Scene, Vector2, Vector3, WebGLRenderer } from 'three';
+import { ABILITY_COLOR, ABILITY_FONT, ABILITY_SIZE, CONTROLLED_HEALTH_HEIGHT, CONTROLLED_HEALTH_WIDTH, CONTROLLED_RADIUS, CROSSHAIR_COLOR, CROSSHAIR_INNER_RADIUS, CROSSHAIR_LINE_WIDTH, CROSSHAIR_OUTER_RADIUS, ENEMY_HEALTH, FONT, GAME_LENGTH, GAP, GRAVITY, HEALTH_FONT, HITMARKER_DURATION, HITMARKER_INNER_RADIUS, HITMARKER_OUTER_RADIUS, KILLS_FONT, KILL_ARROW_LINE_WIDTH, KILL_ARROW_WIDTH, KILL_DURATION, KILL_RADIUS, OWN_HEALTH, REMAINING_ABILITY_COLOR, REASPAWN_FONT, RESPAWN_TIME, SKY_COLOR, TEAMMATE_FONT, TEAMMATE_HEALTH_HEIGHT, TEAMMATE_RADIUS, TEXT_COLOR, TIME_FONT, TIME_STEP, CROSSHAIR_KILL_COLOR, CROSSHAIR_KILL_DURATION, HITMARKER_COLOR, HITMARKER_LINE_WIDTH, RAY_FADE_SPEED } from '../util/constants';
 import heroes from '../util/heroes';
 import { Collision, keymap, renderHealth } from '../util';
 import { formatSeconds, request } from '../../util';
@@ -17,6 +17,7 @@ export default class {
     targets = [0, 1].map(i => [0, 1, 2].map(j => new Target(this, i, j)));
     players: Player[][];
     projectiles: Projectile[] = [];
+    rays: Mesh<any, MeshBasicMaterial>[] = [];
     kills: number[][] = [];
     controlledKills: Record<string, number> = {};
     updateListeners: (() => any)[] = [];
@@ -164,7 +165,9 @@ export default class {
             }
             this.players.forEach(x => x.forEach(x => x.update(dt)));
             this.projectiles.forEach(x => x.update());
+            this.rays.forEach(r => r.material.opacity -= RAY_FADE_SPEED * dt);
             this.projectiles = this.projectiles.filter(p => !p.toRemove);
+            this.rays = this.rays.filter(r => r.material.opacity >= 0 || !this.scene.remove(r));
             this.updateListeners.forEach(f => f());
             this.world.step(TIME_STEP, dt / 1000);
         }

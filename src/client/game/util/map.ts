@@ -5,6 +5,7 @@ import { BRIDGE_COLOR, BRIDGE_GAP, BRIDGE_HEIGHT, GROUND_COLOR, GROUND_PADDING, 
 import { objectCollision } from '.';
 
 export const groundWidth = TOWER_GAP + (TOWER_WIDTH + RAMP_WIDTH + GROUND_PADDING) * 2;
+export const groundHeight = BRIDGE_GAP + TOWER_HEIGHT + MAIN_TOWER_GAP + MAIN_TOWER_HEIGHT + GROUND_PADDING;
 export const bridgeX = (TOWER_GAP + TOWER_WIDTH - TOWER_HALF_WALL_WIDTH) / 2;
 export const towerCenterZ = (BRIDGE_HEIGHT + TOWER_HEIGHT) / 2 + BRIDGE_GAP;
 export const spawnZ = (BRIDGE_HEIGHT + MAIN_TOWER_GAP) / 2 + BRIDGE_GAP + TOWER_HEIGHT;
@@ -73,7 +74,6 @@ export const generateMap = (game: Game) => {
         game.targets[(cZ + 1) / 2][(cX + 1) / 2 + 1].setPosition((x + (TOWER_WIDTH - TOWER_HALF_WALL_WIDTH) / 2) * cX, TOWER_DEPTH / 2, (z + THICKNESS + (TARGET_THICKNESS - TOWER_HEIGHT) / 2) * cZ);
     };
 
-    const groundHeight = BRIDGE_GAP + TOWER_HEIGHT + MAIN_TOWER_GAP + MAIN_TOWER_HEIGHT + GROUND_PADDING;
     [1, -1].forEach(cZ => {
         addMainTower(BRIDGE_HEIGHT / 2 + BRIDGE_GAP + TOWER_HEIGHT + MAIN_TOWER_GAP, cZ);
         addBox([RAMP_WIDTH, THICKNESS, BRIDGE_HEIGHT], BRIDGE_COLOR, [bridgeX * cZ, -THICKNESS / 2, 0]);

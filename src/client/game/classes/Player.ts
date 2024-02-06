@@ -1,12 +1,22 @@
 import { Body, Sphere, Vec3 } from 'cannon-es';
-import { Material, Mesh, MeshLambertMaterial, Raycaster, SphereGeometry, Vector3 } from 'three';
-import { BOT_POSITION_TRESHOLD, BOT_SHOOTING_CONST, DEATH_DEPTH, GRAVITY, JUMP_DOT_PRODUCT, JUMP_VELOCITY, LINEAR_DAMPING, MAIN_TOWER_GAP, PLAYER_RADIUS, PLAYER_SPEED, RAMP_WIDTH, RESPAWN_TIME, TOWER_HEIGHT, WIDTH_PERCENTAGE } from '../util/constants';
+import { Curve, Material, Mesh, MeshBasicMaterial, MeshLambertMaterial, Raycaster, SphereGeometry, TubeGeometry, Vector3 } from 'three';
+import { BOT_POSITION_TRESHOLD, BOT_SHOOTING_CONST, BRIDGE_HEIGHT, DEATH_DEPTH, GRAVITY, JUMP_DOT_PRODUCT, JUMP_VELOCITY, LINEAR_DAMPING, MAIN_TOWER_GAP, PLAYER_RADIUS, PLAYER_SPEED, RAMP_WIDTH, RAY_RADIUS_SCALE, RAY_THICKNESS, RESPAWN_TIME, TOWER_HEIGHT, WIDTH_PERCENTAGE } from '../util/constants';
 import heroes from '../util/heroes';
-import { bridgeX, groundWidth, mainRampX, spawnZ, towerCenterZ } from '../util/map';
+import { bridgeX, groundHeight, groundWidth, mainRampX, spawnZ, towerCenterZ } from '../util/map';
 import { Collision, CollisionGroups, Hero, ProjectileWeapon } from '../util';
 import Game from './Game';
 import HealthSprite from './HealthSprite';
 import Projectile from './Projectile';
+
+class LinearCurve extends Curve<Vector3> {
+    constructor(private p1: Vector3, private p2: Vector3) {
+        super();
+    }
+
+    getPoint(t: number) {
+        return this.p1.clone().add(this.p2.clone().sub(this.p1.clone()).multiplyScalar(t));
+    }
+}
 
 export default class {
     body: Body;
@@ -42,7 +52,7 @@ export default class {
         game.scene.add(this.mesh);
         this.healthSprite = new HealthSprite(game.scene, team, hero.health);
         this.body.position.copy(this.spawnPosition);
-        this.direction = new Vector3(0, 0, (1 - 2 * team) * Math.PI);
+        this.direction = new Vector3(0, 0, 1 - 2 * team);
     }
 
     get spawnPosition() {
@@ -91,7 +101,7 @@ export default class {
     }
 
     raycast() {
-        return new Raycaster(this.cameraPosition, this.direction).intersectObjects(this.game.scene.children.filter(x => x.userData.type ? x.userData.team !== this.team && (x.type !== 'player' || !this.game.players[x.userData.team][x.userData.index].died) : x.userData.object))[0]?.object.userData;
+        return new Raycaster(this.cameraPosition, this.direction).intersectObjects(this.game.scene.children.filter(x => x.userData.type ? x.userData.team !== this.team && (x.type !== 'player' || !this.game.players[x.userData.team][x.userData.index].died) : x.userData.object))[0];
     }
 
     shoot() {
@@ -99,7 +109,17 @@ export default class {
         if (this.hero.weapon.type === 'projectile') this.game.projectiles.push(new Projectile(this.game, this.team, this.cameraPosition, this.direction.clone().multiplyScalar(this.hero.weapon.velocity), <Hero & { weapon: ProjectileWeapon; }>this.hero, this.index));
         else {
             const data = this.raycast();
-            if (data?.type && this.game[<'players' | 'targets'>data.type][data.team][data.index].damage(this.hero.weapon.damage, this.index) && !this.team && this.index === this.game.controlledPlayerIndex) this.game.lastHitmarker = this.game.time;
+            if (data?.object.userData.type && this.game[<'players' | 'targets'>data.object.userData.type][data.object.userData.team][data.object.userData.index].damage(this.hero.weapon.damage, this.index) && !this.team && this.index === this.game.controlledPlayerIndex) this.game.lastHitmarker = this.game.time;
+            const dot = 2 * this.mesh.position.dot(this.direction);
+            const disc = dot ** 2 - 4 * this.mesh.position.lengthSq() + RAY_RADIUS_SCALE * (groundWidth ** 2 + (2 * groundHeight + BRIDGE_HEIGHT) ** 2);
+            if (disc >= 0) {
+                const ray = new Mesh(
+                    new TubeGeometry(new LinearCurve(this.mesh.position, data ? data.point : this.mesh.position.clone().add(this.direction.clone().multiplyScalar((Math.sqrt(disc) - dot) / 2))), 2, RAY_THICKNESS, 16),
+                    new MeshBasicMaterial({ color: this.hero.color, transparent: true }),
+                );
+                this.game.scene.add(ray);
+                this.game.rays.push(ray);
+            }
         }
         this.lastShot = this.game.time;
     }
@@ -135,7 +155,7 @@ export default class {
                     : [],
             ]) {
                 this.direction = target.mesh.position.clone().sub(this.mesh.position).normalize();
-                const data = this.raycast();
+                const data = this.raycast()?.object.userData;
                 if (data && !data.object) {
                     if (this.hero.weapon.type === 'projectile' && this.hero.weapon.gravity) {
                         const diff = this.body.position.clone().vsub(target.body.position);
