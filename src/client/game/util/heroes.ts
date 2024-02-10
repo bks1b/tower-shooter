@@ -9,6 +9,7 @@ const dash = {
     cooldown: 3,
     fn: (p: Player) => {
         const v = 150;
+        p.canJump = false;
         p.body.velocity.x += p.direction.x * v;
         p.body.velocity.y += p.direction.y * v;
         p.body.velocity.z += p.direction.z * v;
