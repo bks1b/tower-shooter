@@ -27,6 +27,7 @@
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
         "@typescript-eslint/no-unused-vars": "error",
         "@typescript-eslint/member-delimiter-style": ["error", { "singleline": { "requireLast": true } }],
         "import/order": [

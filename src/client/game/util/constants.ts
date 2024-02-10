@@ -10,6 +10,7 @@ export const DEATH_DEPTH = 20;
 export const PLAYER_RADIUS = 2;
 export const PLAYER_SPEED = 0.1;
 export const RESPAWN_TIME = 10;
+export const SWITCH_TIME = 350;
 export const GAME_LENGTH = 5;
 export const KILL_DURATION = 5;
 export const JUMP_DOT_PRODUCT = 0.5;

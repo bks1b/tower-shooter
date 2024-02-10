@@ -23,10 +23,11 @@ export default class {
     mesh: Mesh;
     health: number;
     direction = new Vector3();
+    lastPosition = new Vector3();
     died: number | false = false;
     lastAbilityUsage = 0;
+    canJump = true;
     private healthSprite: HealthSprite;
-    private canJump = true;
     private lastShot = 0;
     private lastHitBy: number | null = null;
     private hitByControlled = false;
@@ -60,13 +61,14 @@ export default class {
     }
 
     get cameraPosition() {
-        return this.mesh.position.clone().add(new Vector3(0, PLAYER_RADIUS, 0));
+        return (this.died ? this.lastPosition : this.mesh.position).clone().add(new Vector3(0, PLAYER_RADIUS, 0));
     }
 
     die() {
         if (this.died) return;
         this.died = this.game.time;
         this.body.sleep();
+        this.lastPosition.copy(this.mesh.position);
         this.body.position.copy(this.spawnPosition);
         if (this.lastHitBy !== null) {
             this.game.kills.unshift([this.index, this.lastHitBy, this.team, this.game.time]);
@@ -101,7 +103,7 @@ export default class {
     }
 
     raycast() {
-        return new Raycaster(this.cameraPosition, this.direction).intersectObjects(this.game.scene.children.filter(x => x.userData.type ? x.userData.team !== this.team && (x.type !== 'player' || !this.game.players[x.userData.team][x.userData.index].died) : x.userData.object))[0];
+        return new Raycaster(this.cameraPosition, this.direction).intersectObjects(this.game.scene.children.filter(x => x.userData.type ? x.userData.team !== this.team && (x.userData.type !== 'players' || !this.game.players[x.userData.team][x.userData.index].died) : x.userData.object))[0];
     }
 
     shoot() {
@@ -186,7 +188,7 @@ export default class {
     }
 
     render() {
-        (<Material>this.mesh.material).visible = this.healthSprite.sprite.visible = !this.died && (!!this.team || this.index !== this.game.controlledPlayerIndex);
+        (<Material>this.mesh.material).visible = this.healthSprite.sprite.visible = !this.died && (!!this.team || this.game.switchProgress < 1 || this.index !== this.game.controlledPlayerIndex);
         this.mesh.position.set(this.body.position.x, this.body.position.y, this.body.position.z);
         this.healthSprite.setPosition(this.cameraPosition.x, this.cameraPosition.y, this.cameraPosition.z);
     }

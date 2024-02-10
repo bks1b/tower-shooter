@@ -1,6 +1,6 @@
 import { Vec3, World } from 'cannon-es';
 import { Euler, Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Scene, Vector2, Vector3, WebGLRenderer } from 'three';
-import { ABILITY_COLOR, ABILITY_FONT, ABILITY_SIZE, CONTROLLED_HEALTH_HEIGHT, CONTROLLED_HEALTH_WIDTH, CONTROLLED_RADIUS, CROSSHAIR_COLOR, CROSSHAIR_INNER_RADIUS, CROSSHAIR_LINE_WIDTH, CROSSHAIR_OUTER_RADIUS, ENEMY_HEALTH, FONT, GAME_LENGTH, GAP, GRAVITY, HEALTH_FONT, HITMARKER_DURATION, HITMARKER_INNER_RADIUS, HITMARKER_OUTER_RADIUS, KILLS_FONT, KILL_ARROW_LINE_WIDTH, KILL_ARROW_WIDTH, KILL_DURATION, KILL_RADIUS, OWN_HEALTH, REMAINING_ABILITY_COLOR, REASPAWN_FONT, RESPAWN_TIME, SKY_COLOR, TEAMMATE_FONT, TEAMMATE_HEALTH_HEIGHT, TEAMMATE_RADIUS, TEXT_COLOR, TIME_FONT, TIME_STEP, CROSSHAIR_KILL_COLOR, CROSSHAIR_KILL_DURATION, HITMARKER_COLOR, HITMARKER_LINE_WIDTH, RAY_FADE_SPEED } from '../util/constants';
+import { ABILITY_COLOR, ABILITY_FONT, ABILITY_SIZE, CONTROLLED_HEALTH_HEIGHT, CONTROLLED_HEALTH_WIDTH, CONTROLLED_RADIUS, CROSSHAIR_COLOR, CROSSHAIR_INNER_RADIUS, CROSSHAIR_LINE_WIDTH, CROSSHAIR_OUTER_RADIUS, ENEMY_HEALTH, FONT, GAME_LENGTH, GAP, GRAVITY, HEALTH_FONT, HITMARKER_DURATION, HITMARKER_INNER_RADIUS, HITMARKER_OUTER_RADIUS, KILLS_FONT, KILL_ARROW_LINE_WIDTH, KILL_ARROW_WIDTH, KILL_DURATION, KILL_RADIUS, OWN_HEALTH, REMAINING_ABILITY_COLOR, REASPAWN_FONT, RESPAWN_TIME, SKY_COLOR, TEAMMATE_FONT, TEAMMATE_HEALTH_HEIGHT, TEAMMATE_RADIUS, TEXT_COLOR, TIME_FONT, TIME_STEP, CROSSHAIR_KILL_COLOR, CROSSHAIR_KILL_DURATION, HITMARKER_COLOR, HITMARKER_LINE_WIDTH, RAY_FADE_SPEED, SWITCH_TIME } from '../util/constants';
 import heroes from '../util/heroes';
 import { Collision, keymap, renderHealth } from '../util';
 import { formatSeconds, request } from '../../util';
@@ -30,6 +30,7 @@ export default class {
     private light = new PointLight('#ffffff', 1);
     private ctx: CanvasRenderingContext2D; 
     private lastRender = Date.now();
+    private lastControlledIndex = 0;
     private mouseDown = false;
     private keysDown: Record<string, boolean> = {};
     private startDate = Date.now();
@@ -37,6 +38,7 @@ export default class {
     private pausedAt: number | false = Date.now();
     private started = false;
     private pausedSum = 0;
+    private switchedAt = 0;
     constructor(private config: Config) {
         const canvas = <HTMLCanvasElement>document.getElementById('canvas');
         const settings = <HTMLButtonElement>document.getElementById('settings');
@@ -92,10 +94,16 @@ export default class {
             } else this.pausedAt = Date.now();
         });
         document.body.addEventListener('keydown', k => {
+            if (this.started && this.pausedAt) return;
+            if (!this.controlledPlayer.died && this.started && k.code === 'KeyE') this.controlledPlayer.useAbility();
             if (k.code in keymap) this.keysDown[keymap[k.code]] = true;
-            if (!this.controlledPlayer.died && k.code === 'KeyE') this.controlledPlayer.useAbility();
-            const num = k.code.match(/^Digit(\d)$/)?.[1];
-            if (num && this.players[0][+num - 1] && !this.players[0][+num - 1].died) this.controlledPlayerIndex = +num - 1;
+            const num = +k.code.match(/^Digit(\d)$/)?.[1]! - 1;
+            if (!isNaN(num) && num !== this.controlledPlayerIndex && this.players[0][num] && !this.players[0][num].died) {
+                this.switchedAt = this.started ? this.time : 0;
+                this.lastControlledIndex = this.controlledPlayerIndex;
+                this.controlledPlayerIndex = num;
+                this.setControlledDirection();
+            }
         });
         document.body.addEventListener('keyup', k => {
             if (k.code in keymap) this.keysDown[keymap[k.code]] = false;
@@ -113,7 +121,7 @@ export default class {
             euler.y -= e.movementX * this.config.sensitivity;
             euler.x = Math.max(-Math.PI / 2, Math.min(euler.x - e.movementY * this.config.sensitivity, Math.PI / 2));
             this.camera.quaternion.setFromEuler(euler);
-            this.controlledPlayer.direction = this.camera.getWorldDirection(new Vector3());
+            this.setControlledDirection();
         });
 
         requestAnimationFrame(() => this.update());
@@ -124,7 +132,15 @@ export default class {
     }
 
     get time() {
-        return Date.now() - this.pausedSum;
+        return Date.now() - this.pausedSum - (this.pausedAt ? Date.now() - this.pausedAt : 0);
+    }
+
+    get switchProgress() {
+        return (this.time - this.switchedAt) / SWITCH_TIME;
+    }
+
+    setControlledDirection() {
+        this.controlledPlayer.direction = this.camera.getWorldDirection(new Vector3());
     }
 
     getProjectile(e: Collision) {
@@ -195,7 +211,6 @@ export default class {
             this.ctx.fillStyle = p.hero.color;
             this.ctx.arc(x, TEAMMATE_RADIUS + GAP * 2 + TIME_FONT, TEAMMATE_RADIUS, 0, Math.PI * 2);
             this.ctx.fill();
-            if (this.pausedAt) return;
             if (p.died) {
                 const diff = RESPAWN_TIME - (this.time - p.died) / 1000;
                 const n = diff / RESPAWN_TIME * TEAMMATE_RADIUS * 2;
@@ -241,10 +256,14 @@ export default class {
         });
 
         requestAnimationFrame(() => this.update());
-        if (this.controlledPlayer.died) return;
-        this.camera.position.copy(this.controlledPlayer.cameraPosition);
+        this.camera.position.copy(this.switchProgress < 1
+            ? this.players[0][this.lastControlledIndex].cameraPosition
+                .multiplyScalar(1 - this.switchProgress)
+                .add(this.controlledPlayer.cameraPosition.multiplyScalar(this.switchProgress))
+            : this.controlledPlayer.cameraPosition);
         this.light.position.copy(this.camera.position);
 
+        if (this.controlledPlayer.died) return;
         const killT = Math.max(0, 1 - (this.time - this.lastKill) / CROSSHAIR_KILL_DURATION);
         this.ctx.strokeStyle = `rgb(${CROSSHAIR_COLOR.map((x, i) => ((CROSSHAIR_KILL_COLOR[i] - x) * killT + x)).join(',')})`;
         this.ctx.lineWidth = CROSSHAIR_LINE_WIDTH;
@@ -273,7 +292,7 @@ export default class {
         this.ctx.font = HEALTH_FONT + FONT;
         const health = `${this.controlledPlayer.health}/${this.controlledPlayer.hero.health}`;
         this.ctx.fillText(health, window.innerWidth - (CONTROLLED_RADIUS + GAP) * 2 - (this.ctx.measureText(health).width + CONTROLLED_HEALTH_WIDTH) / 2, window.innerHeight - CONTROLLED_RADIUS - GAP * 2 - CONTROLLED_HEALTH_HEIGHT / 2);
-        if (this.controlledPlayer.hero.ability && !this.pausedAt) {
+        if (this.controlledPlayer.hero.ability) {
             this.ctx.fillStyle = REMAINING_ABILITY_COLOR;
             this.ctx.fillRect(window.innerWidth - (CONTROLLED_RADIUS + GAP) * 2 - GAP - CONTROLLED_HEALTH_WIDTH - ABILITY_SIZE, window.innerHeight - CONTROLLED_RADIUS - GAP - ABILITY_SIZE / 2, ABILITY_SIZE, ABILITY_SIZE);
             this.ctx.fillStyle = ABILITY_COLOR;
