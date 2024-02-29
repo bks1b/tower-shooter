@@ -87,8 +87,8 @@ export default class {
         });
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement) {
-                this.pausedSum += Date.now() - +this.pausedAt;
                 this.lastRender = this.time;
+                this.pausedSum += Date.now() - +this.pausedAt;
                 this.pausedAt = false;
                 this.started = true;
             } else this.pausedAt = Date.now();
