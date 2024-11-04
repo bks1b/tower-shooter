@@ -1,10 +1,20 @@
-h1, h2, h3, h4, h5, h6 {
+h1, h2 {
     margin: 0px;
     font-weight: 400;
+    text-align: center;
 }
 
 ul {
     margin: 0px;
+}
+
+.langPicker {
+    top: 0;
+    right: 0;
+    padding: 6px;
+    position: absolute;
+    border-left: 1px solid black;
+    border-bottom: 1px solid black;
 }
 
 .mainButtons {

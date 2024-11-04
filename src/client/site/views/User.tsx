@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Match } from '../../../util';
 import heroes from '../../game/util/heroes';
-import { formatNumber, formatSeconds, request } from '../../util';
+import { formatNumber, formatSeconds, getAvgKills, getKills, getLang, getOutcome, getPlural, request } from '../../util';
 import Circle from '../components/Circle';
 import { formatDate, HERO_KILL_DIAMETER, MainContext, sumValues } from '../util';
 
@@ -25,25 +25,25 @@ export default (props: { name: string; }) => {
                         }, {} as Record<string, number>);
                         const killCount = sumValues(kills);
                         return <>
-                            <p>{wins} wins</p>
-                            <p>{losses} losses</p>
-                            {losses ? <p>Win/lose ratio: {formatNumber(wins / losses)}</p> : ''}
-                            <p>Winrate: {formatNumber(wins / data[1].length * 100)}%</p>
-                            <p>Average match duration: {formatSeconds(Math.round(data[1].reduce((a, b) => a + b.duration, 0) / data[1].length))}</p>
-                            <p>{killCount} kills</p>
-                            <p>{formatNumber(killCount / data[1].length)} average kills</p>
+                            <p>{getPlural(wins, ['win', 'győzelem'])}</p>
+                            <p>{getPlural(losses, ['loss', 'vereség'])}</p>
+                            {losses ? <p>{['Win/loss ratio', 'Győzelem/vereség arány'][getLang()]}: {formatNumber(wins / losses)}</p> : ''}
+                            <p>{['Win rate', 'Győzelem arány'][getLang()]}: {formatNumber(wins / data[1].length * 100)}%</p>
+                            <p>{['Average duration', 'Átlag hossz'][getLang()]}: {formatSeconds(Math.round(data[1].reduce((a, b) => a + b.duration, 0) / data[1].length))}</p>
+                            <p>{getKills(killCount)}</p>
+                            <p>{getAvgKills(killCount / data[1].length)}</p>
                             {heroes.map((x, i) => <div className='hero' key={i}>
                                 <Circle diameter={HERO_KILL_DIAMETER} color={x.color}/>
                                 <div>
-                                    <p>{kills[i] || 0} kills</p>
-                                    <p>{formatNumber((kills[i] || 0) / data[1].length)} average kills</p>
+                                    <p>{getKills(kills[i] || 0)}</p>
+                                    <p>{getAvgKills((kills[i] || 0) / data[1].length)}</p>
                                 </div>
                             </div>)}
-                            <h3>Match history</h3>
+                            <h2>{['Match history', 'Meccsek'][getLang()]}</h2>
                             <ul>{
                                 [...data[1]]
                                     .reverse()
-                                    .map((x, i) => <li key={i} className='link' onClick={() => navigate(['user', props.name, data[1].length - i + ''])}>{formatDate(x.endDate)}: {x.won ? 'win' : 'loss'}, {sumValues(x.kills)} kills</li>)
+                                    .map((x, i) => <li key={i} className='link' onClick={() => navigate(['user', props.name, data[1].length - i + ''])}>{formatDate(x.endDate)}: {getOutcome(x.won)}, {getKills(sumValues(x.kills))}</li>)
                             }</ul>
                         </>;
                     })()

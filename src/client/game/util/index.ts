@@ -54,8 +54,9 @@ export type Hero = {
     flyingVelocity?: number;
     weapon: ({ type: 'hitscan'; } & BaseWeapon) | ProjectileWeapon;
     ability?: {
-        description: string;
+        description: string[];
         cooldown: number;
         fn: (p: Player) => any;
     };
+    passive?: string[];
 };
