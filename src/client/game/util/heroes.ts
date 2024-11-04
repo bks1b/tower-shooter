@@ -5,7 +5,7 @@ import { PROJECTILE_LIFESPAN } from './constants';
 import { CollisionGroups, Hero, ProjectileWeapon } from '.';
 
 const dash = {
-    description: 'dash forward',
+    description: ['dash forward', 'előreugrás'],
     cooldown: 3,
     fn: (p: Player) => {
         const v = 150;
@@ -27,7 +27,7 @@ export default <Hero[]>[
             rof: 150,
         },
         ability: {
-            description: 'restore full health',
+            description: ['restore full health', 'életpontok visszaállítása'],
             cooldown: 4,
             fn: p => p.health = p.hero.health,
         },
@@ -46,6 +46,7 @@ export default <Hero[]>[
             gravity: false,
             knockback: true,
         },
+        passive: ['flying', 'repülés'],
     },
     {
         color: '#64b9de',
@@ -61,7 +62,7 @@ export default <Hero[]>[
             knockback: true,
         },
         ability: {
-            description: 'launch a grenade that pulls enemies towards itself',
+            description: ['launch a grenade that pulls enemies towards itself', 'gránát kilövése, ami magához húzza az ellenfeleket'],
             cooldown: 5,
             fn: p => {
                 const c = 0.025;

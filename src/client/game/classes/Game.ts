@@ -3,7 +3,7 @@ import { Euler, Mesh, MeshBasicMaterial, PerspectiveCamera, PointLight, Scene, V
 import { ABILITY_COLOR, ABILITY_FONT, ABILITY_SIZE, CONTROLLED_HEALTH_HEIGHT, CONTROLLED_HEALTH_WIDTH, CONTROLLED_RADIUS, CROSSHAIR_COLOR, CROSSHAIR_INNER_RADIUS, CROSSHAIR_LINE_WIDTH, CROSSHAIR_OUTER_RADIUS, ENEMY_HEALTH, FONT, GAME_LENGTH, GAP, GRAVITY, HEALTH_FONT, HITMARKER_DURATION, HITMARKER_INNER_RADIUS, HITMARKER_OUTER_RADIUS, KILLS_FONT, KILL_ARROW_LINE_WIDTH, KILL_ARROW_WIDTH, KILL_DURATION, KILL_RADIUS, OWN_HEALTH, REMAINING_ABILITY_COLOR, REASPAWN_FONT, RESPAWN_TIME, SKY_COLOR, TEAMMATE_FONT, TEAMMATE_HEALTH_HEIGHT, TEAMMATE_RADIUS, TEXT_COLOR, TIME_FONT, TIME_STEP, CROSSHAIR_KILL_COLOR, CROSSHAIR_KILL_DURATION, HITMARKER_COLOR, HITMARKER_LINE_WIDTH, RAY_FADE_SPEED, SWITCH_TIME } from '../util/constants';
 import heroes from '../util/heroes';
 import { Collision, keymap, renderHealth } from '../util';
-import { formatSeconds, request } from '../../util';
+import { formatSeconds, getKills, getLang, parseAuth, request } from '../../util';
 import { generateMap } from '../util/map';
 import { Config, defaultConfig } from '../../../util';
 import Player from './Player';
@@ -67,7 +67,7 @@ export default class {
         menu.addEventListener('click', e => {
             if ((e.target as HTMLElement).className !== 'popupContainer') return;
             menu.style.display = 'none';
-            request('/auth/config', this.config);
+            request('/auth/config', this.config, () => {}, () => {});
         });
         reset.addEventListener('click', () => {
             this.config = { ...defaultConfig };
@@ -91,7 +91,11 @@ export default class {
                 this.pausedSum += Date.now() - +this.pausedAt;
                 this.pausedAt = false;
                 this.started = true;
-            } else this.pausedAt = Date.now();
+                settings.innerHTML = 'Esc';
+            } else {
+                this.pausedAt = Date.now();
+                settings.innerHTML = '<img src="settings.png">';
+            }
         });
         document.body.addEventListener('keydown', k => {
             if (this.started && this.pausedAt) return;
@@ -153,12 +157,15 @@ export default class {
 
     end() {
         this.ended = true;
-        request<{ id: number; }>('/postMatch', {
+        const data = {
             won: !this.targets.map((x, i) => [x.reduce((a, b) => a + b.health, 0), i]).sort((a, b) => b[0] - a[0])[0][1],
             duration: (this.time - this.startDate) / 1000,
             kills: this.controlledKills,
             endDate: Date.now(),
-        }, x => window.location.pathname = `/user/${JSON.parse(localStorage.getItem('auth')!)[0]}/${x.id}`);
+        };
+        const auth = parseAuth();
+        if (auth) request<{ id: number; }>('/postMatch', data, x => window.location.pathname = `/user/${auth[0]}/${x.id}`);
+        else window.location.href = '/match?data=' + encodeURIComponent(JSON.stringify(data));
     }
 
     update() {
@@ -199,11 +206,10 @@ export default class {
         this.ctx.fillStyle = TEXT_COLOR;
         this.ctx.textBaseline = 'top';
         this.ctx.font = TIME_FONT + FONT;
-        const time = this.pausedAt ? this.started ? 'Paused - click to continue' : 'Click anywhere to start' : formatSeconds(remaining);
+        const time = this.pausedAt ? (this.started ? ['Paused - click to continue', 'Megállítva - kattintson a folytatáshoz'] : ['Click anywhere to start', 'Kattintson a kezdéshez'])[getLang()] : formatSeconds(remaining);
         this.ctx.font = KILLS_FONT + FONT;
         this.ctx.fillText(time, (window.innerWidth - this.ctx.measureText(time).width) / 2, GAP);
-        const controlledKills = Object.values(this.controlledKills).reduce((a, b) => a + b, 0);
-        const kills = `${controlledKills} kill${controlledKills === 1 ? '' : 's'}`;
+        const kills = getKills(Object.values(this.controlledKills).reduce((a, b) => a + b, 0));
         this.ctx.fillText(kills, window.innerWidth - this.ctx.measureText(kills).width - GAP, GAP);
         this.players[0].filter((_, i) => this.controlledPlayer.died || i !== this.controlledPlayerIndex).forEach((p, i) => {
             const x = window.innerWidth / 2 + (i + 1 - heroes.length / 2) * (TEAMMATE_RADIUS * 2 + GAP);

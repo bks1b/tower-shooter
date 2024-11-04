@@ -15,6 +15,13 @@ body {
 #settings {
     position: absolute;
     z-index: 4;
+    border-left: 0;
+    border-top: 0;
+}
+
+#settings img {
+    display: block;
+    width: 20px;
 }
 
 td:last-child {
