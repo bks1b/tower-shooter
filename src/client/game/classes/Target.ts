@@ -38,6 +38,7 @@ export default class {
         else {
             this.healthSprite.sprite.visible = false;
             if (!this.index) this.game.end();
+            else this.game.playAudio(this.team ? 'kill' : 'death');
         }
         return true;
     }
