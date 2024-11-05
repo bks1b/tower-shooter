@@ -100,3 +100,6 @@ export const SKY_COLOR = '#64beff';
 
 export const BOT_SHOOTING_CONST = 3.5;
 export const BOT_POSITION_TRESHOLD = 1;
+
+export const VOLUME_SCALAR = 10;
+export const WEAPON_VOLUME = 0.5;

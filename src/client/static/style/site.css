@@ -8,6 +8,19 @@ ul {
     margin: 0px;
 }
 
+iframe {
+    display: block;
+    border: 0px;
+    margin: 0px auto;
+    aspect-ratio: 16 / 9;
+    width: 70%;
+    max-width: 900px;
+}
+
+a[href] {
+    color: black;
+}
+
 .langPicker {
     top: 0;
     right: 0;

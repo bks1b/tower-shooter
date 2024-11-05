@@ -39,6 +39,10 @@ export default class {
     private started = false;
     private pausedSum = 0;
     private switchedAt = 0;
+    private audios: Promise<Record<string, string>> = Promise.all(['hitscan', 'projectile', 'kill', 'death', 'dash', 'heal', 'switch'].map(async s => [
+        s,
+        URL.createObjectURL(await (await fetch(`audio/${s}.mp3`)).blob()),
+    ])).then(d => Object.fromEntries(d));
     constructor(private config: Config) {
         const canvas = <HTMLCanvasElement>document.getElementById('canvas');
         const settings = <HTMLButtonElement>document.getElementById('settings');
@@ -107,6 +111,7 @@ export default class {
                 this.lastControlledIndex = this.controlledPlayerIndex;
                 this.controlledPlayerIndex = num;
                 this.setControlledDirection();
+                this.playAudio('switch');
             }
         });
         document.body.addEventListener('keyup', k => {
@@ -141,6 +146,12 @@ export default class {
 
     get switchProgress() {
         return (this.time - this.switchedAt) / SWITCH_TIME;
+    }
+
+    async playAudio(s: string, v = 1) {
+        const audio = new Audio((await this.audios)[s]);
+        audio.volume = v;
+        audio.play();
     }
 
     setControlledDirection() {

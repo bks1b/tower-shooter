@@ -7,6 +7,7 @@ import { CollisionGroups, Hero, ProjectileWeapon } from '.';
 const dash = {
     description: ['dash forward', 'előreugrás'],
     cooldown: 3,
+    audio: 'dash',
     fn: (p: Player) => {
         const v = 150;
         p.canJump = false;
@@ -29,6 +30,7 @@ export default <Hero[]>[
         ability: {
             description: ['restore full health', 'életpontok visszaállítása'],
             cooldown: 4,
+            audio: 'heal',
             fn: p => p.health = p.hero.health,
         },
     },
@@ -64,6 +66,7 @@ export default <Hero[]>[
         ability: {
             description: ['launch a grenade that pulls enemies towards itself', 'gránát kilövése, ami magához húzza az ellenfeleket'],
             cooldown: 5,
+            audio: 'projectile',
             fn: p => {
                 const c = 0.025;
                 const radius = 30;

@@ -56,6 +56,7 @@ export type Hero = {
     ability?: {
         description: string[];
         cooldown: number;
+        audio: string;
         fn: (p: Player) => any;
     };
     passive?: string[];

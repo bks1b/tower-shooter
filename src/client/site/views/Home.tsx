@@ -83,5 +83,8 @@ export default () => {
         </div>)}</div>
         <h1>{['Controls', 'Irányítás'][getLang()]}</h1>
         <div dangerouslySetInnerHTML={{ __html: getControls() }}/>
+        <h1>{['Video', 'Videó'][getLang()]}</h1>
+        <iframe src='https://www.youtube.com/embed/zon3beyjW5o' referrerPolicy='strict-origin-when-cross-origin' allowFullScreen/>
+        <a href='https://github.com/bks1b/tower-shooter'>{['Source code', 'Forráskód'][getLang()]}</a>
     </>;
 };

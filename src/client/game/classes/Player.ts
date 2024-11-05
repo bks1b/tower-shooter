@@ -1,6 +1,6 @@
 import { Body, Sphere, Vec3 } from 'cannon-es';
 import { Curve, Material, Mesh, MeshBasicMaterial, MeshLambertMaterial, Raycaster, SphereGeometry, TubeGeometry, Vector3 } from 'three';
-import { BOT_POSITION_TRESHOLD, BOT_SHOOTING_CONST, BRIDGE_HEIGHT, DEATH_DEPTH, GRAVITY, JUMP_DOT_PRODUCT, JUMP_VELOCITY, LINEAR_DAMPING, MAIN_TOWER_GAP, PLAYER_RADIUS, PLAYER_SPEED, RAMP_WIDTH, RAY_RADIUS_SCALE, RAY_THICKNESS, RESPAWN_TIME, TOWER_HEIGHT, WIDTH_PERCENTAGE } from '../util/constants';
+import { BOT_POSITION_TRESHOLD, BOT_SHOOTING_CONST, BRIDGE_HEIGHT, DEATH_DEPTH, GRAVITY, JUMP_DOT_PRODUCT, JUMP_VELOCITY, LINEAR_DAMPING, MAIN_TOWER_GAP, PLAYER_RADIUS, PLAYER_SPEED, RAMP_WIDTH, RAY_RADIUS_SCALE, RAY_THICKNESS, RESPAWN_TIME, TOWER_HEIGHT, VOLUME_SCALAR, WEAPON_VOLUME, WIDTH_PERCENTAGE } from '../util/constants';
 import heroes from '../util/heroes';
 import { bridgeX, groundHeight, groundWidth, mainRampX, spawnZ, towerCenterZ } from '../util/map';
 import { Collision, CollisionGroups, Hero, ProjectileWeapon } from '../util';
@@ -75,8 +75,10 @@ export default class {
             if (this.hitByControlled) {
                 this.game.controlledKills[this.lastHitBy] = (this.game.controlledKills[this.lastHitBy] || 0) + 1;
                 this.game.lastKill = this.game.time;
+                this.game.playAudio('kill');
             }
         }
+        if (!this.team && this.index === this.game.controlledPlayerIndex) this.game.playAudio('death');
     }
 
     damage(dmg: number, index: number) {
@@ -124,12 +126,14 @@ export default class {
             }
         }
         this.lastShot = this.game.time;
+        this.game.playAudio(this.hero.weapon.type, WEAPON_VOLUME * VOLUME_SCALAR / (this.game.controlledPlayer.body.position.distanceTo(this.body.position) + VOLUME_SCALAR));
     }
 
     useAbility() {
         if (this.hero.ability && (this.game.time - this.lastAbilityUsage) / 1000 >= this.hero.ability.cooldown) {
             this.hero.ability.fn(this);
             this.lastAbilityUsage = this.game.time;
+            this.game.playAudio(this.hero.ability.audio);
         }
     }
 
